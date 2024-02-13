@@ -4,9 +4,21 @@
 <title>Page Title</title>
 
 
-
 </head>
 <body>
+
+
+<div id="prayer-times">
+    <h3>Prayer Times</h3>
+    <p id="next-prayer"></p>
+    <p id="date-info"></p>
+    <p id="hijri-date"></p>
+    <p id="method-used"></p>
+</div>
+
+
+
+</body>
 
 <script>
     // Function to get user's location
@@ -23,7 +35,7 @@
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
-        const apiUrl = `http://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=2`;
+        const apiUrl = `http://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}`;
 
         fetch(apiUrl, {
             method: 'GET',
@@ -31,7 +43,19 @@
         .then(response => response.json())
         .then(data => {
             const prayerTimes = data.data.timings;
-            const nextPrayer = getNextPrayer(prayerTimes);
+
+            // Get the current time
+            const currentTime = new Date();
+            const currentFormattedTime = currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+            // Find the next prayer time dynamically
+            let nextPrayer = null;
+            for (const prayer in prayerTimes) {
+                if (prayerTimes.hasOwnProperty(prayer) && prayerTimes[prayer] > currentFormattedTime) {
+                    nextPrayer = prayer;
+                    break;
+                }
+            }
 
             const dateInfo = data.data.date.readable;
             const hijriDate = data.data.date.hijri.date;
@@ -45,45 +69,10 @@
         .catch(error => console.error('Error fetching prayer times:', error));
     }
 
-    // Function to get the next prayer dynamically
-    function getNextPrayer(prayerTimes) {
-        const currentTime = new Date();
-        const currentFormattedTime = currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-
-        let nextPrayer = null;
-        for (const prayer in prayerTimes) {
-            if (prayerTimes.hasOwnProperty(prayer) && prayerTimes[prayer] > currentFormattedTime) {
-                nextPrayer = prayer;
-                break;
-            }
-        }
-
-        return nextPrayer;
-    }
-
-    // Function to update prayer times when the button is clicked
-    function updatePrayerTimes() {
-        getUserLocation();
-    }
-
     // Call the function to get user's location and display prayer times
     getUserLocation();
 </script>
 
-<!-- Add a button to trigger manual update -->
-<button onclick="updatePrayerTimes()">Update Prayer Times</button>
-
-<div id="prayer-times">
-    <h3>Prayer Times</h3>
-    <p id="next-prayer"></p>
-    <p id="date-info"></p>
-    <p id="hijri-date"></p>
-    <p id="method-used"></p>
-</div>
-
-
-
-</body>
 
 <style>
     #prayer-times {
