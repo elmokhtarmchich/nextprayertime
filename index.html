@@ -60,60 +60,6 @@
 
 </body>
 
-<script>
-    // Function to get user's location
-    function getUserLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPrayerTimes);
-        } else {
-            console.error("Geolocation is not supported by this browser.");
-        }
-    }
-
-    // Function to display prayer times
-    function showPrayerTimes(position) {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-
-        const apiUrl = `http://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}`;
-
-        fetch(apiUrl, {
-            method: 'GET',
-        })
-        .then(response => response.json())
-        .then(data => {
-            const prayerTimes = data.data.timings;
-
-            // Get the current time
-            const currentTime = new Date();
-            const currentFormattedTime = currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-
-            // Find the next prayer time dynamically
-            let nextPrayer = null;
-            for (const prayer in prayerTimes) {
-                if (prayerTimes.hasOwnProperty(prayer) && prayerTimes[prayer] > currentFormattedTime) {
-                    nextPrayer = prayer;
-                    break;
-                }
-            }
-
-            const dateInfo = data.data.date.readable;
-            const hijriDate = data.data.date.hijri.date;
-            const methodUsed = data.data.meta.method.name;
-
-            document.getElementById('next-prayer').innerText = `Next Prayer (${nextPrayer}): ${prayerTimes[nextPrayer]}`;
-            document.getElementById('date-info').innerText = `Date: ${dateInfo}`;
-            document.getElementById('hijri-date').innerText = `Hijri Date: ${hijriDate}`;
-            document.getElementById('method-used').innerText = `Calculation Method: ${methodUsed}`;
-        })
-        .catch(error => console.error('Error fetching prayer times:', error));
-    }
-
-    // Call the function to get user's location and display prayer times
-    getUserLocation();
-</script>
-
-
 <style>
     #prayer-times {
         text-align: center;
