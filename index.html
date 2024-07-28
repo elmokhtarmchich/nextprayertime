@@ -40,25 +40,29 @@
 
     <script>
         const apiBaseUrl = 'http://api.aladhan.com/v1';
+        const geoDbApiKey = 'YOUR_GEODB_API_KEY'; // Replace with your GeoDB API key
 
         // Function to load countries
         function loadCountries() {
-            // Assuming you have a list of countries or fetch from an API
-            const countries = ['Country1', 'Country2']; // Replace with actual data or API call
-            const countrySelect = document.getElementById('country');
-            countries.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country;
-                option.textContent = country;
-                countrySelect.appendChild(option);
-            });
+            fetch('https://restcountries.com/v3.1/all')
+                .then(response => response.json())
+                .then(countries => {
+                    const countrySelect = document.getElementById('country');
+                    countries.forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country.name.common;
+                        option.textContent = country.name.common;
+                        countrySelect.appendChild(option);
+                    });
 
-            // Load the saved country from local storage
-            const savedCountry = localStorage.getItem('country');
-            if (savedCountry) {
-                countrySelect.value = savedCountry;
-                loadCities(); // Load cities for the saved country
-            }
+                    // Load the saved country from local storage
+                    const savedCountry = localStorage.getItem('country');
+                    if (savedCountry) {
+                        countrySelect.value = savedCountry;
+                        loadCities(); // Load cities for the saved country
+                    }
+                })
+                .catch(error => console.error('Error loading countries:', error));
         }
 
         // Function to load cities based on selected country
@@ -66,35 +70,40 @@
             const country = document.getElementById('country').value;
             localStorage.setItem('country', country); // Save country to local storage
 
-            // Assuming you have a list of cities for each country or fetch from an API
-            const cities = {
-                'Country1': ['City1-1', 'City1-2'],
-                'Country2': ['City2-1', 'City2-2']
-            }; // Replace with actual data or API call
+            // Fetch cities from GeoDB Cities API
+            const geoDbUrl = `https://wft-geo-db.p.rapidapi.com/v1/geo/cities?countryIds=${country}&limit=10&sort=name`;
+            fetch(geoDbUrl, {
+                headers: {
+                    'X-RapidAPI-Key': geoDbApiKey,
+                    'X-RapidAPI-Host': 'wft-geo-db.p.rapidapi.com'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const citySelect = document.getElementById('city');
+                    citySelect.innerHTML = ''; // Clear previous cities
+                    data.data.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.name;
+                        option.textContent = city.name;
+                        citySelect.appendChild(option);
+                    });
 
-            const citySelect = document.getElementById('city');
-            citySelect.innerHTML = ''; // Clear previous cities
-            cities[country].forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                citySelect.appendChild(option);
-            });
-
-            // Load the saved city from local storage
-            const savedCity = localStorage.getItem('city');
-            if (savedCity) {
-                citySelect.value = savedCity;
-            }
+                    // Load the saved city from local storage
+                    const savedCity = localStorage.getItem('city');
+                    if (savedCity) {
+                        citySelect.value = savedCity;
+                    }
+                })
+                .catch(error => console.error('Error loading cities:', error));
         }
 
         // Function to load calculation methods
         function loadMethods() {
-            // Assuming you have a list of methods or fetch from an API
             const methods = [
                 { id: 2, name: 'Islamic Society of North America (ISNA)' },
                 { id: 3, name: 'Muslim World League (MWL)' }
-            ]; // Replace with actual data or API call
+            ];
 
             const methodSelect = document.getElementById('method');
             methods.forEach(method => {
@@ -126,7 +135,7 @@
         }
 
         // Function to display prayer times
-        function showPrayerTimes(country, city, method, date) {
+        function showPrayerTimes(country, city, method, date = '') {
             const apiUrl = `${apiBaseUrl}/timingsByAddress?address=${city},${country}&method=${method}&date=${date}`;
 
             fetch(apiUrl, {
@@ -185,7 +194,7 @@
             localStorage.setItem('city', city);
             localStorage.setItem('method', method);
 
-            showPrayerTimes(country, city, method, '');
+            showPrayerTimes(country, city, method);
         }
 
         // Initial loading of countries, methods, and saved selections
@@ -197,7 +206,7 @@
             const savedCity = localStorage.getItem('city');
             const savedMethod = localStorage.getItem('method');
             if (savedCountry && savedCity && savedMethod) {
-                showPrayerTimes(savedCountry, savedCity, savedMethod, '');
+                showPrayerTimes(savedCountry, savedCity, savedMethod);
             }
         }
     </script>
